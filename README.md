@@ -1,8 +1,5 @@
 # AI Presentation Builder
 
-**Created by: Vedant Mishra**  
-**GitHub: [@Ardenbruh](https://github.com/Ardenbruh)**
-
 A powerful AI-powered presentation builder built with Next.js 15, featuring intelligent content generation, interactive slide editing, and beautiful presentations.
 
 ## 🚀 Features
