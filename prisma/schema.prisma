@@ -1,0 +1,123 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  clerkId   String   @unique
+  email     String   @unique
+  firstName String?
+  lastName  String?
+  imageUrl  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  presentations Presentation[]
+  collaborations Collaboration[]
+
+  @@map("users")
+}
+
+model Presentation {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  thumbnail   String?
+  isPublic    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  slides          Slide[]
+  collaborations  Collaboration[]
+  aiGenerations   AiGeneration[]
+
+  @@map("presentations")
+}
+
+model Slide {
+  id       String @id @default(cuid())
+  order    Int
+  title    String?
+  content  Json   // Fabric.js canvas data
+  notes    String?
+  duration Int?   // in seconds for auto-advance
+
+  presentationId String
+  presentation   Presentation @relation(fields: [presentationId], references: [id], onDelete: Cascade)
+
+  aiGenerations AiGeneration[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("slides")
+}
+
+model Collaboration {
+  id   String           @id @default(cuid())
+  role CollaborationRole
+
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  presentationId String
+  presentation   Presentation @relation(fields: [presentationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, presentationId])
+  @@map("collaborations")
+}
+
+model AiGeneration {
+  id     String        @id @default(cuid())
+  type   AiContentType
+  prompt String
+  result Json
+  status AiStatus      @default(PENDING)
+
+  userId String
+  presentationId String?
+  presentation   Presentation? @relation(fields: [presentationId], references: [id], onDelete: Cascade)
+  slideId        String?
+  slide          Slide?        @relation(fields: [slideId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("ai_generations")
+}
+
+enum CollaborationRole {
+  OWNER
+  EDITOR
+  VIEWER
+  COMMENTER
+}
+
+enum AiContentType {
+  SLIDE_CONTENT
+  SLIDE_DESIGN
+  PRESENTATION_OUTLINE
+  SPEAKER_NOTES
+  IMAGE_GENERATION
+  TEXT_SUMMARY
+}
+
+enum AiStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
